@@ -1,0 +1,146 @@
+.product-card {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 2.5rem; /* space for button */
+}
+
+.product-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.product-details {
+  padding: 1rem;
+}
+
+.product-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.product-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.product-weight {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.product-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.current-price {
+  color: #000;
+}
+
+.old-price {
+  text-decoration: line-through;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.discount {
+  color: #2e7d32;
+  font-size: 0.9rem;
+}
+
+/* ✅ Shared style for both Add button and Quantity Controls */
+.add-btn,
+.quantity-controls {
+  position: absolute;
+  bottom: 15px; 
+  /* postion height */
+  right: 20px;
+  /* right position */
+  height: 34px;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+/* Add Button Styles */
+.add-btn {
+  background-color: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 0 18px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.add-btn:hover {
+  background-color: #b71c1c;
+}
+
+/* Quantity Controls */
+.quantity-controls {
+  border: 1px solid #d90429;
+  border-radius: 20px;
+  background-color: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  cursor: default;
+  gap: 10px;
+  padding: 0 8px;
+}
+
+.counter-btn {
+  background: none;
+  border: none;
+  color: #d90429;
+  font-size: 1.2rem;
+  cursor: pointer;
+  user-select: none;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  text-align: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.counter-btn:hover {
+  background-color: #fbdcdc;
+}
+
+.quantity {
+  font-weight: 700;
+  font-size: 1rem;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Fade-in animation */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
