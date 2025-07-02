@@ -231,22 +231,24 @@ def get_products():
 def confirm_order():
     data = request.get_json()
     current_user = get_jwt_identity()
-    weight = data.get('weight')
     items = data.get('items')
     total_amount = data.get('totalAmount')
 
     if not items or total_amount is None:
         return jsonify({"msg": "Missing order details"}), 400
 
-    # Generate custom order ID: FM + YYYYMMDD + HHMMSSmmm
     now = datetime.utcnow()
     date_time_str = now.strftime('%Y%m%d%H%M%S') + f"{int(now.microsecond / 1000):03d}"
-    order_id = f"FM{date_time_str}"  # e.g., FM20250629172000234
+    order_id = f"FM{date_time_str}"
+
+    # Fallback for missing weight in any item
+    for item in items:
+        if 'weight' not in item:
+            item['weight'] = 'N/A'
 
     order = {
         "_id": order_id,
         "user_email": current_user,
-        "weight": weight,
         "items": items,
         "total_amount": total_amount,
         "timestamp": now
@@ -254,7 +256,6 @@ def confirm_order():
 
     try:
         orders_collection.insert_one(order)
-
         return jsonify({
             "msg": "Order confirmed!",
             "order_id": order_id,
@@ -264,7 +265,7 @@ def confirm_order():
     except Exception as e:
         print("Error saving order:", e)
         return jsonify({"msg": "Failed to confirm order"}), 500
-    
+
 
 # get orders API
 @app.route('/orders', methods=['GET'])

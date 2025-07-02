@@ -81,6 +81,7 @@ function CartPage({ cart, products, onIncrement, onDecrement }) {
     const orderItems = cartItems.map(item => ({
       title: item.title,
       quantity: cart[item.id],
+      weight: item.weight || "N/A", 
       price: item.price,
     }));
 

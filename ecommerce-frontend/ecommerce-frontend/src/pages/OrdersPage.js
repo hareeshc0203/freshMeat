@@ -88,13 +88,24 @@ function OrdersPage() {
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
               }}
             >
-              <p><strong>Order ID:</strong> {order._id.startsWith("FM") ? order._id : `FM${order.timestamp.replace(/[-T:.Z]/g, '').slice(0, 17)}`}</p>
+              <p>
+                <strong>Order ID:</strong>{' '}
+                {order._id.startsWith("FM")
+                  ? order._id
+                  : `FM${order.timestamp.replace(/[-T:.Z]/g, '').slice(0, 17)}`}
+              </p>
               <p><strong>Total:</strong> ₹{order.total_amount}</p>
               <p><strong>Time:</strong> {new Date(order.timestamp).toLocaleString()}</p>
+
               <ul style={{ marginTop: '0.5rem', paddingLeft: '1.2rem' }}>
                 {order.items.map((item, idx) => (
                   <li key={idx}>
                     {item.title} x {item.quantity} — ₹{item.price * item.quantity}
+                    {item.weight && item.weight !== 'N/A' && (
+                      <span style={{ color: 'gray', fontSize: '0.9rem' }}>
+                        {' '}({item.weight})
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
