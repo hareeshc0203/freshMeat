@@ -110,3 +110,9 @@ def delete_address(address_id):
 
 # db
 # "C:\Users\krshn\AppData\Local\Programs\mongosh\mongosh.exe"
+
+# git
+# git status
+# git add .
+# git commit -m "Your commit message here"
+# git push
