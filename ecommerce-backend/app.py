@@ -1,14 +1,16 @@
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import users_collection
+# from models import users_collection # Removed as users_collection is defined directly
 from pymongo import MongoClient
 import secrets
 from datetime import timedelta
 from datetime import datetime
-from models import add_address, addresses_collection
+import pytz
+# from models import add_address, addresses_collection # Removed as addresses_collection is defined directly
 from flask_cors import CORS
 import uuid
+from bson.objectid import ObjectId # Import ObjectId for MongoDB _id conversion
 
 app = Flask(__name__)
 CORS(app)
@@ -18,9 +20,11 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['freshmeet_db']
 users_collection = db['users']
 orders_collection = db['orders']
+addresses_collection = db['addresses'] # Define addresses_collection here
 
 # Configurations
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'  # Change in production!
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 jwt = JWTManager(app)
 
 # Store reset tokens in a temporary in-memory dictionary (in production, use a DB or Redis)
@@ -34,9 +38,9 @@ products = [
         "title": "Fresh Mutton Curry Cut",
         "description": "Juicy, tender goat meat",
         "weight": "500g",
-        "pieces": "9-12",               #optional, if not in response, use fallback
+        "pieces": "9-12",             #optional, if not in response, use fallback
         "price": 450,
-        "oldPrice": 800,               #optional
+        "oldPrice": 800,              #optional
         "image": "http://localhost:5000/static/images/MuttonCurryCut.jpg",
     },
     {
@@ -44,18 +48,17 @@ products = [
         "title": "Premium Lamb Chops",
         "description": "Succulent bone-in lamb pieces",
         "weight": "500g",
-        "pieces": "9-12",               #optional, if not in response, use fall
+        "pieces": "9-12",             #optional, if not in response, use fall
         "price": 450,
         "oldPrice": 500,
         "image": "http://localhost:5000/static/images/BonelessMutton.jpg",
-    }
-    ,
+    },
         {
         "id": 3,
         "title": "Mutton Keema",
         "description": "Finely minced goat meat, perfect for keema dishes",
         "price": 430,
-        "oldPrice": 500,
+        "oldPrice": 1000,
         "image": "http://localhost:5000/static/images/MuttonKeema.jpg",
         "weight": "500g"
     },
@@ -77,15 +80,7 @@ products = [
     "image": "http://localhost:5000/static/images/MuttonLiver.jpg",
     "weight": "250g"
   },
-  {
-    "id": 6,
-    "title": "Mutton Paya/Trotters (Whole): Pack of 4",
-    "description": "Goat leg trotters, cleaned and ready to cook",
-    "price": 300,
-    "oldPrice": 500,
-    "image": "http://localhost:5000/static/images/MuttonPaya.jpg",
-    "weight": "2 pieces"
-  },
+
   {
     "id": 7,
     "title": "Mutton Boneless",
@@ -95,13 +90,22 @@ products = [
     "image": "http://localhost:5000/static/images/MuttonBoneless.jpg",
     "weight": "400g"
   },
+    {
+    "id": 6,
+    "title": "Mutton Paya/Trotters (Whole): Pack of 4",
+    "description": "Goat leg trotters, cleaned and ready to cook",
+    "price": 300,
+    "oldPrice": 500,
+    "image": "http://localhost:5000/static/images/MuttonPaya.jpg",
+    "weight": "2 pieces"
+  },
   {
     "id": 8,
     "title": "Mutton Boti & Intestine (1 set)",
     "description": "Mutton Boti (tripe and intestine) is known for its rich, buttery yet earthy taste & chewy texture",
     "price": 250,
     "oldPrice": 400,
-    "image": "http://localhost:5000/static/images/MuttonBoti&Intestine.jpg",    
+    "image": "http://localhost:5000/static/images/MuttonBoti&Intestine.jpg",
     "weight": "500g"
   }
 ]
@@ -110,15 +114,15 @@ products = [
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    
+
     required_fields = ['firstname', 'lastname', 'mobile' , 'email', 'password']
     if not all(field in data for field in required_fields):
         return jsonify({'msg': 'Missing fields'}), 400
-    
+
     # Check if user already exists
     if users_collection.find_one({'email': data['email']}):
         return jsonify({'msg': 'Email already registered'}), 400
-    
+
     if users_collection.find_one({'mobile': data['mobile']}):
         return jsonify({"msg": "User with this mobile already exists"}), 409
 
@@ -131,7 +135,7 @@ def register():
         'email': data['email'],
         'password': hashed_password
     }
-    
+
     users_collection.insert_one(user_data)
     return jsonify({'msg': 'User registered successfully'}), 201
 
@@ -237,9 +241,27 @@ def confirm_order():
     if not items or total_amount is None:
         return jsonify({"msg": "Missing order details"}), 400
 
-    now = datetime.utcnow()
-    date_time_str = now.strftime('%Y%m%d%H%M%S') + f"{int(now.microsecond / 1000):03d}"
-    order_id = f"FM{date_time_str}"
+     # Define IST timezone
+    ist_timezone = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(ist_timezone) # Get current time in IST
+
+    # --- Updated Order ID Generation Logic ---
+    # Convert year to a letter (2025=A, 2026=B, etc.)
+    # Subtract 2025 from the current year to get an offset, then add to ASCII 'A'
+    year_letter = chr(65 + (now.year - 2025))
+
+    # Convert month number to a letter (1=A, 2=B, ..., 12=L)
+    month_letter = chr(65 + now.month - 1)
+
+    # Format day, hour, minute, second with leading zeros
+    day_dd = now.strftime('%d')
+    hour_hh = now.strftime('%H')
+    minute_mm = now.strftime('%M')
+    second_ss = now.strftime('%S')
+
+    # Combine all parts to form the new order_id
+    order_id = f"FM{year_letter}{month_letter}{day_dd}{hour_hh}{minute_mm}{second_ss}"
+    # --- End Updated Order ID Generation Logic ---
 
     # Fallback for missing weight in any item
     for item in items:
@@ -277,6 +299,45 @@ def get_orders():
         order["_id"] = str(order["_id"])
     return jsonify({"orders": orders}), 200
 
+# Helper function for adding address (moved from models.py for self-containment)
+def add_address(user_email, houseNo, landmark, town, state):
+    address_data = {
+        "user_email": user_email,
+        "houseNo": houseNo,
+        "landmark": landmark,
+        "town": town,
+        "state": state,
+        "created_at": datetime.utcnow()
+    }
+    result = addresses_collection.insert_one(address_data)
+    return result.inserted_id
+
+# Helper function for updating address (moved from models.py for self-containment)
+def update_address(address_id, updates):
+    # Ensure address_id is a valid ObjectId if it's stored as such
+    try:
+        object_id = ObjectId(address_id)
+    except Exception:
+        return False # Invalid ID format
+
+    result = addresses_collection.update_one(
+        {"_id": object_id},
+        {"$set": updates}
+    )
+    return result.modified_count > 0
+
+# Helper function for deleting address (moved from models.py for self-containment)
+def delete_address(address_id):
+    # Ensure address_id is a valid ObjectId if it's stored as such
+    try:
+        object_id = ObjectId(address_id)
+    except Exception:
+        return False # Invalid ID format
+
+    result = addresses_collection.delete_one({"_id": object_id})
+    return result.deleted_count > 0
+
+
 # Add address API
 @app.route('/add-address', methods=['POST'])
 @jwt_required()
@@ -298,7 +359,7 @@ def add_address_route():
     except Exception as e:
         print("Error saving address:", e)
         return jsonify({"msg": f"Failed to save address: {str(e)}"}), 500
-    
+
 
 # Get address API
 @app.route('/get-addresses', methods=['GET'])
@@ -318,7 +379,7 @@ def get_addresses():
 @app.route('/update-address/<address_id>', methods=['PUT'])
 @jwt_required()
 def update_address_route(address_id):
-    user_email = get_jwt_identity()
+    user_email = get_jwt_identity() # This is not used but kept for consistency with original code
     data = request.get_json()
 
     allowed_fields = ['houseNo', 'landmark', 'town', 'state']
@@ -327,21 +388,17 @@ def update_address_route(address_id):
     if not updates:
         return jsonify({"msg": "No valid fields provided."}), 400
 
-    from models import update_address  # if in separate file
-
     success = update_address(address_id, updates)
     if success:
         return jsonify({"msg": "Address updated successfully."}), 200
     else:
         return jsonify({"msg": "Failed to update address."}), 400
-    
+
 
 # delete address API
 @app.route('/delete-address/<address_id>', methods=['DELETE'])
 @jwt_required()
 def delete_address_route(address_id):
-    from models import delete_address  # if in separate file
-
     success = delete_address(address_id)
     if success:
         return jsonify({"msg": "Address deleted successfully."}), 200

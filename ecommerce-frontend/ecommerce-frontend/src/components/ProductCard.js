@@ -14,7 +14,8 @@ const ProductCard = ({
   onAddToCart,
   onIncrement,
   onDecrement,
-}) => {
+
+}) => { 
   return (
     <div className="product-card">
       <img src={image} alt={title} className="product-image" />

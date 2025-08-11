@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import theme from '../theme';
+import { useLocation } from 'react-router-dom';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,9 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const location = useLocation();
+  const fromCart = location.state?.fromCart;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,6 +26,7 @@ const LoginPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
       });
+
 
       const data = await response.json();
 
@@ -36,16 +41,18 @@ const LoginPage = () => {
         );
         window.dispatchEvent(new Event('storage'));
         setMessage('Login successful!');
-        setTimeout(() => navigate('/'), 1000);
-      } else {
-        setMessage('Invalid email or password.');
-      }
-    } catch (err) {
-      setMessage('Server error. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
+        setTimeout(() => {
+          navigate('/', { state: { justLoggedIn: true, fromCart } });
+        }, 1000);
+          } else {
+            setMessage('Invalid email or password.');
+          }
+        } catch (err) {
+          setMessage('Server error. Please try again later.');
+        } finally {
+          setLoading(false);
+        }
+      };
 
   return (
     <div
@@ -93,6 +100,24 @@ const LoginPage = () => {
       >
         Login
       </h2>
+
+
+        {fromCart && (
+          <div
+            style={{
+              backgroundColor: '#fff3cd',
+              color: '#856404',
+              border: '1px solid #ffeeba',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginBottom: '1.5rem',
+              fontSize: '0.95rem',
+              textAlign: 'center',
+            }}
+          >
+            Just one step! Login or sign up to continue with your order
+          </div>
+        )}
 
       <form onSubmit={handleLogin}>
         <div style={{ marginBottom: '1.5rem' }}>

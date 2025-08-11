@@ -14,7 +14,14 @@ const RegisterPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
-  const [touched, setTouched] = useState(false);
+  const [touched, setTouched] = useState({
+    firstName: false,
+    lastName: false,
+    mobile: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
   const [serverMessage, setServerMessage] = useState('');
   const navigate = useNavigate();
@@ -26,19 +33,18 @@ const RegisterPage = () => {
   }, []);
 
   const validatePassword = (pwd) => {
-    const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d\s])([^\s]){8,20}$/;
+     const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=\]{};':"\\|,.<>/?]{8,20}$/;
     return pattern.test(pwd);
   };
 
   useEffect(() => {
-
     const newErrors = {};
     if (!firstName.trim()) newErrors.firstName = 'First name is required.';
     if (!lastName.trim()) newErrors.lastName = 'Last name is required.';
     if (!mobile.trim()) {
-  newErrors.mobile = 'Mobile number is required.';
+      newErrors.mobile = 'Mobile number is required.';
     } else if (!/^\d{10}$/.test(mobile)) {
-  newErrors.mobile = 'Enter a valid 10-digit mobile number.';
+      newErrors.mobile = 'Enter a valid 10-digit mobile number.';
     }
     if (!email.trim()) {
       newErrors.email = 'Email is required.';
@@ -49,7 +55,7 @@ const RegisterPage = () => {
     if (!password) {
       newErrors.password = 'Password is required.';
     } else if (!validatePassword(password)) {
-      newErrors.password = 'Password must be 8–20 characters, include A-Z, a-z, 0–9, special characters, and no spaces.';
+      newErrors.password = 'Password must be 8–20 characters, include A-Z, a-z, 0–9   and no spaces.';
     }
 
     if (!confirmPassword) {
@@ -60,11 +66,25 @@ const RegisterPage = () => {
 
     setErrors(newErrors);
     setIsFormValid(Object.keys(newErrors).length === 0);
-  }, [firstName, lastName, mobile, email, password, confirmPassword, touched]);
+  }, [firstName, lastName, mobile, email, password, confirmPassword]);
+
+  const handleBlur = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setTouched(true);
+
+    // Mark all fields touched on submit to show all errors if any
+    setTouched({
+      firstName: true,
+      lastName: true,
+      mobile: true,
+      email: true,
+      password: true,
+      confirmPassword: true,
+    });
+
     if (!isFormValid) return;
 
     try {
@@ -76,8 +96,8 @@ const RegisterPage = () => {
           lastname: lastName,
           mobile: mobile,
           email: email,
-          password: password
-        })
+          password: password,
+        }),
       });
 
       const data = await res.json();
@@ -153,12 +173,17 @@ const RegisterPage = () => {
               id="firstName"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
+              onBlur={() => handleBlur('firstName')}
               placeholder="First name"
               style={inputStyle}
               aria-invalid={!!errors.firstName}
               aria-describedby="firstNameError"
             />
-            {errors.firstName && <div id="firstNameError" style={errorTextStyle}>{errors.firstName}</div>}
+            {touched.firstName && errors.firstName && (
+              <div id="firstNameError" style={errorTextStyle}>
+                {errors.firstName}
+              </div>
+            )}
           </div>
 
           <div style={{ flex: 1 }}>
@@ -169,63 +194,68 @@ const RegisterPage = () => {
               id="lastName"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
+              onBlur={() => handleBlur('lastName')}
               placeholder="Last name"
               style={inputStyle}
               aria-invalid={!!errors.lastName}
               aria-describedby="lastNameError"
             />
-            {errors.lastName && <div id="lastNameError" style={errorTextStyle}>{errors.lastName}</div>}
+            {touched.lastName && errors.lastName && (
+              <div id="lastNameError" style={errorTextStyle}>
+                {errors.lastName}
+              </div>
+            )}
           </div>
         </div>
 
-          {/* Mobile Number */}
-<div style={{ marginBottom: '1rem' }}>
-  <label htmlFor="mobile" style={{ color: '#555', fontWeight: '600' }}>
-    Mobile Number<span style={{ color: 'red' }}>*</span>
-  </label>
-  <div style={{ display: 'flex', alignItems: 'center' }}>
-    <span
-      style={{
-        padding: '0.6rem 1rem',
-        backgroundColor: '#e0e0e0',
-        border: '1.5px solid #ccc',
-        borderRadius: '6px 0 0 6px',
-        fontSize: '1rem',
-        whiteSpace: 'nowrap',
-        userSelect: 'none',
-      }}
-    >
-      +91
-    </span>
-    <input
-      id="mobile"
-      type="text"
-      maxLength={10}
-      value={mobile}
-      onChange={(e) => {
-        const val = e.target.value;
-        if (/^\d{0,10}$/.test(val)) {
-          setMobile(val);
-        }
-      }}
-      placeholder="Enter 10-digit mobile number"
-      style={{
-        ...inputStyle,
-        borderRadius: '0 6px 6px 0',
-        marginTop: 0,
-        borderLeft: 'none',
-      }}
-      aria-invalid={!!errors.mobile}
-      aria-describedby="mobileError"
-    />
-  </div>
-  {errors.mobile && (
-    <div id="mobileError" style={errorTextStyle}>
-      {errors.mobile}
-    </div>
-  )}
-</div>
-
+        {/* Mobile Number */}
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="mobile" style={{ color: '#555', fontWeight: '600' }}>
+            Mobile Number<span style={{ color: 'red' }}>*</span>
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span
+              style={{
+                padding: '0.6rem 1rem',
+                backgroundColor: '#e0e0e0',
+                border: '1.5px solid #ccc',
+                borderRadius: '6px 0 0 6px',
+                fontSize: '1rem',
+                whiteSpace: 'nowrap',
+                userSelect: 'none',
+              }}
+            >
+              +91
+            </span>
+            <input
+              id="mobile"
+              type="text"
+              maxLength={10}
+              value={mobile}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^\d{0,10}$/.test(val)) {
+                  setMobile(val);
+                }
+              }}
+              onBlur={() => handleBlur('mobile')}
+              placeholder="Enter 10-digit mobile number"
+              style={{
+                ...inputStyle,
+                borderRadius: '0 6px 6px 0',
+                marginTop: 0,
+                borderLeft: 'none',
+              }}
+              aria-invalid={!!errors.mobile}
+              aria-describedby="mobileError"
+            />
+          </div>
+          {touched.mobile && errors.mobile && (
+            <div id="mobileError" style={errorTextStyle}>
+              {errors.mobile}
+            </div>
+          )}
+        </div>
 
         {/* Email */}
         <div style={{ marginBottom: '1rem' }}>
@@ -237,12 +267,17 @@ const RegisterPage = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => handleBlur('email')}
             placeholder="you@example.com"
             style={inputStyle}
             aria-invalid={!!errors.email}
             aria-describedby="emailError"
           />
-          {errors.email && <div id="emailError" style={errorTextStyle}>{errors.email}</div>}
+          {touched.email && errors.email && (
+            <div id="emailError" style={errorTextStyle}>
+              {errors.email}
+            </div>
+          )}
         </div>
 
         {/* Password */}
@@ -256,6 +291,7 @@ const RegisterPage = () => {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => handleBlur('password')}
               placeholder="Enter strong password"
               maxLength={20}
               style={inputStyle}
@@ -268,7 +304,11 @@ const RegisterPage = () => {
               </span>
             )}
           </div>
-          {errors.password && <div id="passwordError" style={errorTextStyle}>{errors.password}</div>}
+          {touched.password && errors.password && (
+            <div id="passwordError" style={errorTextStyle}>
+              {errors.password}
+            </div>
+          )}
         </div>
 
         {/* Confirm Password */}
@@ -282,6 +322,7 @@ const RegisterPage = () => {
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              onBlur={() => handleBlur('confirmPassword')}
               placeholder="Re-enter password"
               maxLength={20}
               style={inputStyle}
@@ -294,7 +335,11 @@ const RegisterPage = () => {
               </span>
             )}
           </div>
-          {errors.confirmPassword && <div id="confirmPasswordError" style={errorTextStyle}>{errors.confirmPassword}</div>}
+          {touched.confirmPassword && errors.confirmPassword && (
+            <div id="confirmPasswordError" style={errorTextStyle}>
+              {errors.confirmPassword}
+            </div>
+          )}
         </div>
 
         {/* Submit Button */}
@@ -319,7 +364,9 @@ const RegisterPage = () => {
 
         {/* Server response */}
         {serverMessage && (
-          <p style={{ textAlign: 'center', color: 'green', marginTop: '1rem' }}>{serverMessage}</p>
+          <p style={{ textAlign: 'center', color: serverMessage.includes('successful') ? 'green' : 'red', marginTop: '1rem' }}>
+            {serverMessage}
+          </p>
         )}
 
         {/* Login Link */}

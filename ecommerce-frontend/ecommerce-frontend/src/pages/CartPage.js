@@ -81,8 +81,10 @@ function CartPage({ cart, products, onIncrement, onDecrement }) {
     const orderItems = cartItems.map(item => ({
       title: item.title,
       quantity: cart[item.id],
-      weight: item.weight || "N/A", 
+      weight: item.weight || "N/A",
       price: item.price,
+      pieces: item.pieces || "N/A",
+      oldPrice: item.oldPrice || null
     }));
 
     try {
@@ -150,7 +152,7 @@ function CartPage({ cart, products, onIncrement, onDecrement }) {
       setNewAddress({
         houseNo: '',
         landmark: '',
-        town: 'Dharamavaram, 515671',
+        town: 'Dharamavaram 515671',
         state: 'Andhra Pradesh',
       });
       await fetchAddresses();
@@ -180,6 +182,77 @@ function CartPage({ cart, products, onIncrement, onDecrement }) {
         <span style={{ fontSize: '1.1rem', color: theme.colors.primary }}>← Back to Home</span>
       </div>
 
+      
+
+      <h1 style={{ color: theme.colors.primary, marginBottom: '1.5rem' }}>Your Cart</h1>
+
+      {cartItems.map(item => (
+            <div key={item.id} style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            marginBottom: '1.5rem',
+            borderBottom: `1px solid ${theme.colors.border}`,
+            paddingBottom: '1.5rem',
+            fontFamily: 'Segoe UI, sans-serif'
+          }}>
+            <img src={item.image} alt={item.title} style={{
+              width: '110px',
+              height: '80px',
+              objectFit: 'cover',
+              borderRadius: '6px',
+              marginRight: '1rem',
+              flexShrink: 0
+            }} />
+
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: '0 0 0.4rem 0' }}>{item.title}</h3>
+
+              <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>
+                {item.weight} {item.pieces ? `· ${item.pieces} pieces` : ''}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                {item.oldPrice && (
+                  <span style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.9rem' }}>
+                    ₹{item.oldPrice}
+                  </span>
+                )}
+                <span style={{ color: '#d32f2f', fontWeight: 'bold', fontSize: '1rem' }}>
+                  ₹{item.price}
+                </span>
+                {item.oldPrice && item.oldPrice > item.price && (
+                  <span style={{
+                    backgroundColor: '#e53935',
+                    color: '#fff',
+                    fontSize: '0.75rem',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    marginLeft: '4px'
+                  }}>
+                    {Math.round(((item.oldPrice - item.price) / item.oldPrice) * 100)}% OFF
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.3rem' }}>
+                <button style={buttonStyle} onClick={() => onDecrement(item.id)}>−</button>
+                <span style={{ margin: '0 1rem', fontSize: '1rem' }}>{cart[item.id]}</span>
+                <button style={buttonStyle} onClick={() => onIncrement(item.id)}>+</button>
+              </div>
+            </div>
+
+            <div style={{
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              color: '#333',
+              textAlign: 'right',
+              minWidth: '80px'
+            }}>
+              ₹{(item.price * cart[item.id]).toFixed(2)}
+            </div>
+          </div>
+        ))}
+
       <div style={{
         backgroundColor: '#fff3cd',
         color: '#856404',
@@ -191,36 +264,7 @@ function CartPage({ cart, products, onIncrement, onDecrement }) {
       }}>
         📍 <strong>Note:</strong> We currently accept orders only for <strong>Dharamavaram</strong> location. Please ensure your address is within this area before placing the order.
       </div>
-
-      <h1 style={{ color: theme.colors.primary, marginBottom: '1.5rem' }}>Your Cart</h1>
-
-      {cartItems.map(item => (
-        <div key={item.id} style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '1rem',
-          borderBottom: `1px solid ${theme.colors.border}`,
-          paddingBottom: '1rem',
-        }}>
-          <img src={item.image} alt={item.title} style={{
-            width: '120px',
-            height: '80px',
-            objectFit: 'cover',
-            borderRadius: '8px',
-            marginRight: '1rem'
-          }} />
-          <div style={{ flex: 1 }}>
-            <h3>{item.title}</h3>
-            <p>Price: ₹{item.price}</p>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <button style={buttonStyle} onClick={() => onDecrement(item.id)}>−</button>
-              <span style={{ margin: '0 1rem' }}>{cart[item.id]}</span>
-              <button style={buttonStyle} onClick={() => onIncrement(item.id)}>+</button>
-            </div>
-          </div>
-          <div><strong>₹{(item.price * cart[item.id]).toFixed(2)}</strong></div>
-        </div>
-      ))}
+      
 
       <h3 style={{ marginTop: '2rem' }}>Select Delivery Address</h3>
       {addresses.length === 0 ? (
@@ -258,6 +302,9 @@ function CartPage({ cart, products, onIncrement, onDecrement }) {
       )}
 
       {addressError && <div style={{ color: 'red', marginBottom: '1rem' }}>{addressError}</div>}
+
+
+      
 
       <div style={{ textAlign: 'right', marginTop: '2rem' }}>
         <h2>Total: ₹{totalAmount.toFixed(2)}</h2>
